@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>옴의 법칙 무한 문제은행</title>
+<style>
+  :root { --ink:#1d2430; --sub:#5b6676; --line:#d5dbe4; --s:#3b6fd8; --p:#d8743b; --ok:#1f9d55; --no:#d64545; --bg:#f3f5f8; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Pretendard","Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif; line-height: 1.55; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 18px 16px 60px; }
+  .hidden { display: none !important; }
+  h1 { font-size: 26px; margin: 6px 0 4px; }
+  .sub { color: var(--sub); font-size: 14px; }
+  .panel { background: #fff; border-radius: 14px; padding: 18px; margin-top: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  label.f { display: block; font-size: 14px; color: var(--sub); margin-bottom: 4px; }
+  input.t { width: 100%; font: inherit; font-size: 18px; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 10px; }
+  input.t:focus { outline: none; border-color: var(--s); }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
+  .mode { border: 2px solid var(--line); border-radius: 12px; padding: 12px; cursor: pointer; background: #fff; text-align: left; font: inherit; color: inherit; }
+  .mode b { display: block; font-size: 16px; }
+  .mode span { font-size: 13px; color: var(--sub); }
+  .mode.on { border-color: var(--ink); background: #f6f8fb; }
+  .btn { font: inherit; font-size: 17px; font-weight: 700; border: none; border-radius: 12px; padding: 12px 18px; cursor: pointer; background: var(--ink); color: #fff; }
+  .btn.ghost { background: #fff; color: var(--ink); border: 1.5px solid var(--ink); }
+  .btn.wide { width: 100%; margin-top: 16px; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .msg { color: var(--no); font-size: 14px; margin-top: 8px; min-height: 1em; }
+
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .who { font-size: 14px; color: var(--sub); }
+  .score { display: flex; gap: 8px; }
+  .chip { background: #fff; border-radius: 20px; padding: 4px 12px; font-size: 14px; font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  .bar { height: 8px; background: #e3e8ef; border-radius: 4px; margin-top: 10px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--ink); width: 0; transition: width .3s; }
+
+  .card { background: #fff; border-radius: 14px; padding: 18px; margin-top: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .qhead { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .qno { font-weight: 800; font-size: 18px; }
+  .tag { font-size: 12px; padding: 2px 9px; border-radius: 10px; color: #fff; }
+  .tag.s { background: var(--s); } .tag.p { background: var(--p); }
+  .tag2 { font-size: 12px; color: var(--sub); border: 1px solid var(--line); border-radius: 10px; padding: 1px 8px; }
+  .qtext { font-size: 18px; margin: 4px 0 8px; }
+  .fig { text-align: center; }
+  .fig svg { max-width: 100%; height: auto; }
+  .ans { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+  .ans input { flex: 1; font-size: 22px; text-align: center; }
+  .unit { font-size: 20px; font-weight: 800; min-width: 28px; }
+  .fb { margin-top: 12px; border-radius: 10px; padding: 10px 12px; font-size: 15px; }
+  .fb.ok { background: #e7f6ee; color: #145c34; }
+  .fb.no { background: #fdeaea; color: #8a1f1f; }
+  .fb b { font-size: 17px; }
+  .actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .actions .btn { flex: 1; }
+  .card.pop { animation: pop .35s ease; }
+  @keyframes pop { from { transform: translateY(8px); opacity: .3; } to { transform: none; opacity: 1; } }
+  .shake { animation: shake .35s; }
+  @keyframes shake { 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
+  table.res { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 10px; }
+  table.res th, table.res td { border-bottom: 1px solid var(--line); padding: 6px 4px; text-align: center; }
+  table.res td:first-child, table.res th:first-child { text-align: left; }
+  .big { font-size: 40px; font-weight: 800; }
+  .send { font-size: 14px; margin-top: 8px; }
+  .send.ok { color: var(--ok); } .send.no { color: var(--no); }
+  @media (max-width: 520px) { .row2, .modes { grid-template-columns: 1fr; } .qtext { font-size: 16px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 시작 화면 -->
+  <section id="vStart">
+    <div class="sub">중학교 과학 · 전기와 자기 · 2022 개정 교육과정</div>
+    <h1>옴의 법칙 무한 문제은행</h1>
+    <div class="sub">저항의 직렬·병렬 연결 계산 20개 유형 — 풀 때마다 숫자가 새로 바뀝니다.</div>
+    <div class="panel">
+      <div class="row2">
+        <div><label class="f">학번</label><input class="t" id="inSid" inputmode="numeric" placeholder="예: 20301"></div>
+        <div><label class="f">이름</label><input class="t" id="inName" placeholder="이름"></div>
+      </div>
+      <label class="f" style="margin-top:14px">모드 선택</label>
+      <div class="modes" id="modes">
+        <button class="mode on" data-m="test"><b>평가 모드</b><span>20문항 (직렬 10 + 병렬 10), 끝나면 자동 제출</span></button>
+        <button class="mode" data-m="all"><b>무한 연습 · 전체</b><span>직렬·병렬 유형이 섞여서 계속 나옴</span></button>
+        <button class="mode" data-m="s"><b>무한 연습 · 직렬</b><span>직렬 10개 유형만</span></button>
+        <button class="mode" data-m="p"><b>무한 연습 · 병렬</b><span>병렬 10개 유형만</span></button>
+      </div>
+      <button class="btn wide" id="bStart">시작하기</button>
+      <div class="msg" id="startMsg"></div>
+    </div>
+    <div class="panel sub" style="font-size:13px">
+      답은 숫자만 입력하세요 (예: 1.5). 단위는 자동으로 붙습니다. 전지의 내부 저항과 전선의 저항은 무시합니다.
+    </div>
+  </section>
+
+  <!-- 풀이 화면 -->
+  <section id="vPlay" class="hidden">
+    <div class="top">
+      <div class="who" id="who"></div>
+      <div class="score"><span class="chip" id="cScore">0 / 0</span><span class="chip" id="cStreak">연속 0</span></div>
+    </div>
+    <div class="bar" id="barWrap"><i id="bar"></i></div>
+    <div class="card" id="card">
+      <div class="qhead"><span class="qno" id="qNo"></span><span class="tag" id="qGroup"></span><span class="tag2" id="qTag"></span></div>
+      <div class="qtext" id="qText"></div>
+      <div class="fig" id="qFig"></div>
+      <div class="ans">
+        <input class="t" id="inAns" inputmode="decimal" autocomplete="off" placeholder="답 입력">
+        <span class="unit" id="qUnit"></span>
+        <button class="btn" id="bCheck">채점</button>
+      </div>
+      <div id="fb"></div>
+      <div class="actions">
+        <button class="btn hidden" id="bNext">다음 문제 →</button>
+      </div>
+    </div>
+    <div class="actions" id="practiceActions">
+      <button class="btn ghost" id="bFinish">그만하고 결과 제출</button>
+    </div>
+  </section>
+
+  <!-- 결과 화면 -->
+  <section id="vResult" class="hidden">
+    <div class="panel" style="text-align:center">
+      <div class="sub" id="rWho"></div>
+      <div class="big" id="rScore"></div>
+      <div class="sub" id="rDetail"></div>
+      <div class="send" id="rSend"></div>
+      <button class="btn ghost hidden" id="bResend" style="margin-top:8px">다시 제출</button>
+    </div>
+    <div class="panel">
+      <b>유형별 결과</b>
+      <table class="res"><thead><tr><th>유형</th><th>푼 수</th><th>정답</th></tr></thead><tbody id="rTable"></tbody></table>
+    </div>
+    <button class="btn wide" id="bAgain">처음으로</button>
+  </section>
+</div>
+
+<script>
+/* ===== 설정: 구글 Apps Script 웹앱 주소를 여기에 붙여넣으세요 ===== */
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1ln2xfpW2IBJBi9Ts2ElhWfMV1_RgZoxZC46GWRd1WWX502hxPPnHdnxklSXbRFqd/exec';
+/* ================================================================ */
+
+/* ---------- 난수 도구 ---------- */
+const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const pick2 = a => { const x = pick(a); let y; do { y = pick(a); } while (y === x); return [x, y]; };
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = ri(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const f = x => String(+(+x).toFixed(2));
+const isInt = x => Math.abs(x - Math.round(x)) < 1e-9;
+const isHalf = x => isInt(x * 2);
+const DIV = { 6: [2, 3, 6], 12: [2, 3, 4, 6, 12], 24: [3, 4, 6, 8, 12, 24] };
+const RATIO = [[1, 2], [1, 3], [2, 3], [1, 4], [3, 5], [2, 5], [3, 4]];
+const GRAPH = [{ Vm: 6, A: 2, B: 3 }, { Vm: 6, A: 3, B: 6 }, { Vm: 6, A: 2, B: 6 }, { Vm: 6, A: 4, B: 6 },
+               { Vm: 12, A: 4, B: 6 }, { Vm: 12, A: 6, B: 12 }, { Vm: 12, A: 4, B: 12 }, { Vm: 12, A: 3, B: 6 }];
+
+/* ---------- 회로도 ---------- */
+const STROKE = 'stroke="#1d2430" stroke-width="2" fill="none"';
+function resistor(cx, y, label, below) {
+  const pts = [`${cx - 22},${y}`];
+  for (let i = 0; i < 6; i++) pts.push(`${cx - 18 + i * 7.2},${y + (i % 2 ? 7 : -7)}`);
+  pts.push(`${cx + 22},${y}`);
+  return `<rect x="${cx - 24}" y="${y - 9}" width="48" height="18" fill="#fff"/>
+    <polyline points="${pts.join(' ')}" ${STROKE} stroke-linejoin="round"/>
+    <text x="${cx}" y="${below ? y + 24 : y - 13}" font-size="13" text-anchor="middle" font-weight="700">${label}</text>`;
+}
+function meter(cx, cy, t) {
+  return `<circle cx="${cx}" cy="${cy}" r="11" fill="#fff" stroke="#1d2430" stroke-width="2"/>
+    <text x="${cx}" y="${cy + 4.5}" font-size="13" text-anchor="middle" font-weight="700">${t}</text>`;
+}
+function battery(x, cy, label) {
+  return `<rect x="${x - 18}" y="${cy - 9}" width="36" height="18" fill="#fff"/>
+    <line x1="${x - 15}" y1="${cy - 6}" x2="${x + 15}" y2="${cy - 6}" stroke="#1d2430" stroke-width="2.5"/>
+    <line x1="${x - 8}" y1="${cy + 6}" x2="${x + 8}" y2="${cy + 6}" stroke="#1d2430" stroke-width="5"/>
+    <text x="${x + 20}" y="${cy + 5}" font-size="13" font-weight="700">${label}</text>`;
+}
+function series(labels, v, opt = {}) {
+  const L = 30, R = 300, T = 50, B = 130;
+  let s = `<svg viewBox="0 0 320 150" width="320" height="150"><rect x="${L}" y="${T}" width="${R - L}" height="${B - T}" ${STROKE}/>`;
+  s += battery(L, (T + B) / 2, v);
+  const n = labels.length, x1 = 90, x2 = 270;
+  labels.forEach((lb, i) => {
+    const cx = n === 1 ? (x1 + x2) / 2 : x1 + (x2 - x1) * i / (n - 1);
+    s += resistor(cx, T, lb, opt.vm === i);
+    if (opt.vm === i) {
+      s += `<polyline points="${cx - 26},${T} ${cx - 26},${T - 32} ${cx + 26},${T - 32} ${cx + 26},${T}" ${STROKE}/>`;
+      s += `<circle cx="${cx - 26}" cy="${T}" r="2.5" fill="#1d2430"/><circle cx="${cx + 26}" cy="${T}" r="2.5" fill="#1d2430"/>`;
+      s += meter(cx, T - 32, 'V');
+    }
+  });
+  if (opt.am) s += meter(180, B, 'A');
+  return s + '</svg>';
+}
+function parallel(labels, v, opt = {}) {
+  const n = labels.length, gap = 48, y0 = 32, yl = y0 + gap * (n - 1), yb = yl + 36;
+  const Lx = 30, bl = 110, br = 280, H = yb + 14;
+  let s = `<svg viewBox="0 0 320 ${H}" width="320" height="${H}">`;
+  s += `<polyline points="${bl},${y0} ${Lx},${y0} ${Lx},${yb} ${br},${yb} ${br},${y0}" ${STROKE}/>`;
+  s += `<line x1="${bl}" y1="${y0}" x2="${bl}" y2="${yl}" ${STROKE}/>`;
+  s += battery(Lx, (y0 + yb) / 2, v);
+  labels.forEach((lb, i) => {
+    const y = y0 + gap * i;
+    s += `<line x1="${bl}" y1="${y}" x2="${br}" y2="${y}" ${STROKE}/>`;
+    s += `<circle cx="${bl}" cy="${y}" r="3" fill="#1d2430"/><circle cx="${br}" cy="${y}" r="3" fill="#1d2430"/>`;
+    s += resistor(185, y, lb);
+    if (opt.bam === i) s += meter(245, y, 'A');
+  });
+  if (opt.am) s += meter(200, yb, 'A');
+  return s + '</svg>';
+}
+function graph(g) {
+  const Imax = g.Vm / g.A, ox = 46, oy = 150, W = 216, H = 120, sx = W / g.Vm, sy = H / Imax;
+  const ystep = Imax <= 2 ? 0.5 : 1;
+  let s = `<svg viewBox="0 0 300 180" width="300" height="180">`;
+  for (let v = g.Vm / 3; v <= g.Vm + 1e-9; v += g.Vm / 3)
+    s += `<line x1="${ox + v * sx}" y1="${oy}" x2="${ox + v * sx}" y2="${oy - H}" stroke="#d5dbe4" stroke-dasharray="3 3"/><text x="${ox + v * sx}" y="${oy + 15}" font-size="11" text-anchor="middle">${f(v)}</text>`;
+  for (let a = ystep; a <= Imax + 1e-9; a += ystep)
+    s += `<line x1="${ox}" y1="${oy - a * sy}" x2="${ox + W}" y2="${oy - a * sy}" stroke="#d5dbe4" stroke-dasharray="3 3"/><text x="${ox - 6}" y="${oy - a * sy + 4}" font-size="11" text-anchor="end">${f(a)}</text>`;
+  s += `<line x1="${ox}" y1="${oy}" x2="${ox + W + 14}" y2="${oy}" stroke="#1d2430" stroke-width="1.5"/>`;
+  s += `<line x1="${ox}" y1="${oy}" x2="${ox}" y2="${oy - H - 14}" stroke="#1d2430" stroke-width="1.5"/>`;
+  s += `<text x="${ox + W + 8}" y="${oy + 28}" font-size="11" text-anchor="end">전압(V)</text><text x="${ox - 4}" y="${oy - H - 18}" font-size="11">전류(A)</text>`;
+  [['A', g.A, '#3b6fd8'], ['B', g.B, '#d8743b']].forEach(([n, r, c]) => {
+    const yy = oy - (g.Vm / r) * sy;
+    s += `<line x1="${ox}" y1="${oy}" x2="${ox + W}" y2="${yy}" stroke="${c}" stroke-width="2.5"/><circle cx="${ox + W}" cy="${yy}" r="3.5" fill="${c}"/>`;
+    s += `<text x="${ox + W + 8}" y="${yy + 4}" font-size="13" font-weight="700" fill="${c}">${n}</text>`;
+  });
+  return s + '</svg>';
+}
+
+/* ---------- 20개 유형 생성기 (null 반환 시 다시 뽑음) ---------- */
+const T = [
+  { id: 'S1', g: 's', tag: '전체 전류', unit: 'A', gen() {
+    const R1 = ri(1, 6), R2 = ri(1, 8), I = pick([1, 2, 3]), V = I * (R1 + R2);
+    if (V > 36) return null;
+    return { q: `그림과 같이 ${R1}Ω, ${R2}Ω 저항을 ${V}V 전원에 직렬로 연결하였다. 전류계에 흐르는 전류의 세기는?`,
+      fig: series([R1 + 'Ω', R2 + 'Ω'], V + 'V', { am: 1 }), a: I, sol: `전체 저항 = ${R1} + ${R2} = ${R1 + R2}Ω, I = V/R = ${V}/${R1 + R2} = ${I}A` }; } },
+  { id: 'S2', g: 's', tag: '전원 전압', unit: 'V', gen() {
+    const R1 = ri(2, 10), R2 = ri(2, 10), I = pick([0.5, 1, 1.5, 2, 2.5, 3]), V = I * (R1 + R2);
+    if (!isInt(V) || V > 60) return null;
+    return { q: `${R1}Ω, ${R2}Ω 저항을 직렬로 연결하였더니 전류계에 ${f(I)}A가 흘렀다. 전원의 전압은?`,
+      fig: series([R1 + 'Ω', R2 + 'Ω'], '? V', { am: 1 }), a: V, sol: `전체 저항 ${R1 + R2}Ω, V = IR = ${f(I)} × ${R1 + R2} = ${f(V)}V` }; } },
+  { id: 'S3', g: 's', tag: '전압 분배', unit: 'V', gen() {
+    const [R1, R2] = pick2([2, 3, 4, 5, 6, 8, 10]), I = pick([1, 1.5, 2, 3]), V = I * (R1 + R2);
+    if (!isInt(V) || !isInt(I * R2) || V > 60) return null;
+    return { q: `${R1}Ω, ${R2}Ω 저항을 ${V}V 전원에 직렬로 연결하였다. 전압계가 가리키는 값(${R2}Ω에 걸리는 전압)은?`,
+      fig: series([R1 + 'Ω', R2 + 'Ω'], V + 'V', { vm: 1 }), a: I * R2, sol: `I = ${V}/(${R1}+${R2}) = ${f(I)}A, ${R2}Ω 전압 = ${f(I)} × ${R2} = ${f(I * R2)}V` }; } },
+  { id: 'S4', g: 's', tag: '미지 저항', unit: 'Ω', gen() {
+    const R1 = pick([5, 10, 15, 20]), R = pick([2, 4, 5, 6, 8, 10, 15]), I = pick([0.2, 0.4, 0.5, 0.8, 1, 1.5, 2]), V = I * (R1 + R);
+    if (!isInt(V) || V < 3 || V > 40) return null;
+    return { q: `${R1}Ω과 저항 R을 ${V}V 전원에 직렬로 연결하였더니 전류계에 ${f(I)}A가 흘렀다. 저항 R의 크기는?`,
+      fig: series([R1 + 'Ω', 'R'], V + 'V', { am: 1 }), a: R, sol: `전체 저항 = ${V}/${f(I)} = ${R1 + R}Ω, R = ${R1 + R} − ${R1} = ${R}Ω` }; } },
+  { id: 'S5', g: 's', tag: '세 저항', unit: 'V', gen() {
+    const rs = shuffle([1, 2, 3, 4, 5, 6]).slice(0, 3), sum = rs[0] + rs[1] + rs[2], I = pick([1, 2]), V = I * sum, k = ri(0, 2);
+    if (V > 36) return null;
+    return { q: `${rs[0]}Ω, ${rs[1]}Ω, ${rs[2]}Ω 저항을 ${V}V 전원에 직렬로 연결하였다. ${rs[k]}Ω 저항에 걸리는 전압은?`,
+      fig: series(rs.map(r => r + 'Ω'), V + 'V'), a: I * rs[k], sol: `I = ${V}/${sum} = ${I}A, ${rs[k]}Ω 전압 = ${I} × ${rs[k]} = ${I * rs[k]}V (전압 비 = 저항 비 ${rs.join(' : ')})` }; } },
+  { id: 'S6', g: 's', tag: '저항 비', unit: 'V', gen() {
+    const [a, b] = pick(RATIO), n = ri(1, 6), V = (a + b) * n, w = ri(1, 2), ans = (w === 1 ? a : b) * n;
+    return { q: `저항 R₁과 R₂의 크기 비가 ${a} : ${b}이다. 두 저항을 ${V}V 전원에 직렬로 연결할 때, R${w === 1 ? '₁' : '₂'}에 걸리는 전압은?`,
+      fig: series(['R₁', 'R₂'], V + 'V', { vm: w - 1 }), a: ans, sol: `직렬에서는 전류가 같으므로 전압 비 = 저항 비 = ${a} : ${b} → ${V} × ${w === 1 ? a : b}/${a + b} = ${ans}V` }; } },
+  { id: 'S7', g: 's', tag: '그래프 해석', unit: 'A', gen() {
+    const g = pick(GRAPH), I = pick([1, 2, 3]), V = I * (g.A + g.B);
+    if (V > 36) return null;
+    return { q: `그래프는 저항 A, B의 전압-전류 관계이다. A와 B를 직렬로 연결하여 ${V}V 전원에 연결할 때 회로에 흐르는 전류는?`,
+      fig: graph(g) + series(['A', 'B'], V + 'V'), a: I,
+      sol: `그래프에서 A = ${g.Vm}V/${f(g.Vm / g.A)}A = ${g.A}Ω, B = ${g.Vm}V/${f(g.Vm / g.B)}A = ${g.B}Ω. 전체 ${g.A + g.B}Ω, I = ${V}/${g.A + g.B} = ${I}A` }; } },
+  { id: 'S8', g: 's', tag: '전압계 이용', unit: 'V', gen() {
+    const [R1, R2] = pick2([2, 3, 4, 5, 6, 8, 10, 12]), I = pick([0.5, 1, 1.5, 2]), V1 = I * R1, V = I * (R1 + R2);
+    if (!isInt(V1) || !isInt(V) || V > 60) return null;
+    return { q: `${R1}Ω, ${R2}Ω 저항을 직렬로 연결하였더니 ${R1}Ω에 연결한 전압계가 ${V1}V를 가리켰다. 전원의 전압은?`,
+      fig: series([R1 + 'Ω', R2 + 'Ω'], '? V', { vm: 0 }), a: V, sol: `I = ${V1}/${R1} = ${f(I)}A, ${R2}Ω 전압 = ${f(I)} × ${R2} = ${f(I * R2)}V, 전원 = ${V1} + ${f(I * R2)} = ${V}V` }; } },
+  { id: 'S9', g: 's', tag: '저항 추가', unit: 'A', gen() {
+    const R = pick([2, 3, 4, 5, 6, 10, 12]), I0 = pick([1, 2, 3, 4]), V = R * I0, m = pick([1, 2, 3]), R2 = R * m, I = V / (R + R2);
+    if (V > 48 || !isHalf(I)) return null;
+    return { q: `${V}V 전원에 ${R}Ω 저항 하나만 연결하면 ${I0}A가 흐른다. 여기에 ${R2}Ω 저항을 직렬로 더 연결하면 회로에 흐르는 전류는?`,
+      fig: series([R + 'Ω', R2 + 'Ω'], V + 'V', { am: 1 }), a: I, sol: `전체 저항 = ${R} + ${R2} = ${R + R2}Ω, I = ${V}/${R + R2} = ${f(I)}A (저항 ${1 + m}배 → 전류 1/${1 + m}배)` }; } },
+  { id: 'S10', g: 's', tag: '같은 저항', unit: 'Ω', gen() {
+    const n = ri(2, 4), R = pick([2, 3, 4, 5, 6, 8, 10]), I = pick([0.5, 1, 2]), V = n * R * I;
+    if (!isInt(V) || V > 60) return null;
+    return { q: `크기가 같은 저항 ${n}개를 ${V}V 전원에 직렬로 연결하였더니 전류계에 ${f(I)}A가 흘렀다. 저항 1개의 크기는?`,
+      fig: series(Array(n).fill('R'), V + 'V', { am: 1 }), a: R, sol: `전체 저항 = ${V}/${f(I)} = ${n * R}Ω, 저항 1개 = ${n * R}/${n} = ${R}Ω` }; } },
+
+  { id: 'P1', g: 'p', tag: '전체 전류', unit: 'A', gen() {
+    const V = pick([6, 12, 24]), [R1, R2] = pick2(DIV[V]), I1 = V / R1, I2 = V / R2;
+    return { q: `${R1}Ω, ${R2}Ω 저항을 ${V}V 전원에 병렬로 연결하였다. 전류계에 흐르는 전체 전류는?`,
+      fig: parallel([R1 + 'Ω', R2 + 'Ω'], V + 'V', { am: 1 }), a: I1 + I2, sol: `병렬에서 각 저항 전압 = ${V}V. ${V}/${R1} = ${f(I1)}A, ${V}/${R2} = ${f(I2)}A → 전체 ${f(I1 + I2)}A` }; } },
+  { id: 'P2', g: 'p', tag: '합성 저항', unit: 'Ω', gen() {
+    const [R1, R2] = shuffle(pick([[3, 6], [4, 12], [6, 12], [10, 15], [12, 24], [6, 6], [20, 30], [4, 4], [10, 10], [5, 20], [12, 12], [6, 3], [8, 24], [9, 18]])), Rt = R1 * R2 / (R1 + R2);
+    return { q: `${R1}Ω, ${R2}Ω 저항을 병렬로 연결하였다. 두 저항의 합성 저항(전체 저항)은?`,
+      fig: parallel([R1 + 'Ω', R2 + 'Ω'], 'V'), a: Rt, sol: `1/R = 1/${R1} + 1/${R2} → R = ${R1}×${R2}/(${R1}+${R2}) = ${f(Rt)}Ω` }; } },
+  { id: 'P3', g: 'p', tag: '가지 전류', unit: 'A', gen() {
+    const V = pick([6, 12, 24]), [R1, R2] = pick2(DIV[V]), I1 = V / R1, I2 = V / R2;
+    return { q: `${R1}Ω, ${R2}Ω 저항을 병렬로 연결하였더니 ${R1}Ω 쪽 전류계에 ${f(I1)}A가 흘렀다. ${R2}Ω 저항에 흐르는 전류는?`,
+      fig: parallel([R1 + 'Ω', R2 + 'Ω'], '? V', { bam: 0 }), a: I2, sol: `전원 전압 = ${f(I1)} × ${R1} = ${V}V, ${R2}Ω 전류 = ${V}/${R2} = ${f(I2)}A` }; } },
+  { id: 'P4', g: 'p', tag: '미지 저항', unit: 'Ω', gen() {
+    const V = pick([6, 12, 24]), [R1, R2] = pick2(DIV[V]), I1 = V / R1, I2 = V / R2;
+    return { q: `${R1}Ω과 저항 R₂를 ${V}V 전원에 병렬로 연결하였더니 전체 전류가 ${f(I1 + I2)}A였다. R₂의 크기는?`,
+      fig: parallel([R1 + 'Ω', 'R₂'], V + 'V', { am: 1 }), a: R2, sol: `${R1}Ω 전류 = ${V}/${R1} = ${f(I1)}A, R₂ 전류 = ${f(I1 + I2)} − ${f(I1)} = ${f(I2)}A, R₂ = ${V}/${f(I2)} = ${R2}Ω` }; } },
+  { id: 'P5', g: 'p', tag: '저항 비', unit: 'A', gen() {
+    const [a, b] = pick(RATIO), k = ri(1, 4), It = (a + b) * k, w = ri(1, 2), ans = (w === 1 ? b : a) * k;
+    return { q: `저항 R₁과 R₂의 크기 비가 ${a} : ${b}이다. 두 저항을 병렬로 연결했을 때 전체 전류가 ${It}A라면, R${w === 1 ? '₁' : '₂'}에 흐르는 전류는?`,
+      fig: parallel(['R₁', 'R₂'], 'V', { am: 1 }), a: ans, sol: `병렬에서는 전압이 같으므로 전류 비 = 저항의 역비 = ${b} : ${a} → ${It} × ${w === 1 ? b : a}/${a + b} = ${ans}A` }; } },
+  { id: 'P6', g: 'p', tag: '같은 저항', unit: 'A', gen() {
+    const c = pick([{ R: 12, V: 6 }, { R: 6, V: 6 }, { R: 6, V: 12 }, { R: 10, V: 5 }, { R: 20, V: 10 }, { R: 24, V: 12 }, { R: 8, V: 4 }, { R: 4, V: 8 }]), n = ri(2, 4), I = c.V / c.R;
+    return { q: `${c.R}Ω 저항 ${n}개를 ${c.V}V 전원에 병렬로 연결하였다. 전류계에 흐르는 전체 전류는?`,
+      fig: parallel(Array(n).fill(c.R + 'Ω'), c.V + 'V', { am: 1 }), a: n * I, sol: `각 저항 전류 = ${c.V}/${c.R} = ${f(I)}A, 전체 = ${f(I)} × ${n} = ${f(n * I)}A (합성 저항 ${f(c.R / n)}Ω)` }; } },
+  { id: 'P7', g: 'p', tag: '그래프 해석', unit: 'A', gen() {
+    const g = pick(GRAPH), IA = g.Vm / g.A, IB = g.Vm / g.B;
+    return { q: `그래프는 저항 A, B의 전압-전류 관계이다. A와 B를 병렬로 연결하여 ${g.Vm}V 전원에 연결하였다. 전원에서 흘러나오는 전체 전류는?`,
+      fig: graph(g) + parallel(['A', 'B'], g.Vm + 'V', { am: 1 }), a: IA + IB, sol: `병렬이라 A, B 모두 ${g.Vm}V. 그래프에서 A에 ${f(IA)}A, B에 ${f(IB)}A → 전체 ${f(IA + IB)}A` }; } },
+  { id: 'P8', g: 'p', tag: '저항 추가', unit: 'A', gen() {
+    const V = pick([6, 12, 24]), [R1, R2] = pick2(DIV[V]), I1 = V / R1, I2 = V / R2;
+    return { q: `${V}V 전원에 ${R1}Ω 저항 하나만 연결하면 ${f(I1)}A가 흐른다. 여기에 ${R2}Ω 저항을 병렬로 더 연결하면 전체 전류는?`,
+      fig: parallel([R1 + 'Ω', R2 + 'Ω'], V + 'V', { am: 1 }), a: I1 + I2, sol: `${R1}Ω 전류 ${f(I1)}A는 그대로, ${R2}Ω 전류 = ${V}/${R2} = ${f(I2)}A → 전체 ${f(I1 + I2)}A (병렬 추가 → 전체 전류 증가)` }; } },
+  { id: 'P9', g: 'p', tag: '생활 적용', unit: 'A', gen() {
+    const n = ri(2, 3), rs = shuffle([22, 44, 55, 110, 220]).slice(0, n), is = rs.map(r => 220 / r), sum = is.reduce((x, y) => x + y, 0);
+    const names = ['A', 'B', 'C'];
+    return { q: `220V 가정용 전원에 저항이 ${rs.map(r => r + 'Ω').join(', ')}인 전기 기구 ${n}개를 함께 켰다. 가정의 전기 기구는 병렬로 연결된다. 전원에서 흘러나오는 전체 전류는?`,
+      fig: parallel(rs.map(r => r + 'Ω'), '220V', { am: 1 }), a: sum, sol: `${rs.map((r, i) => `220/${r} = ${f(is[i])}A`).join(', ')} → 전체 ${f(sum)}A` }; } },
+  { id: 'P10', g: 'p', tag: '종합', unit: 'Ω', gen() {
+    const V = pick([6, 12, 24]), R1 = pick(DIV[V]), R2 = pick(DIV[V].concat([2 * V]).filter(r => r !== R1)), I1 = V / R1, I2 = V / R2;
+    return { q: `${R1}Ω과 저항 R₂를 병렬로 연결하였다. 전체 전류는 ${f(I1 + I2)}A이고, R₂ 쪽 전류계는 ${f(I2)}A를 가리켰다. R₂의 크기는?`,
+      fig: parallel([R1 + 'Ω', 'R₂'], '? V', { am: 1, bam: 1 }), a: R2, sol: `${R1}Ω 전류 = ${f(I1 + I2)} − ${f(I2)} = ${f(I1)}A, 전원 전압 = ${f(I1)} × ${R1} = ${V}V, R₂ = ${V}/${f(I2)} = ${R2}Ω` }; } },
+];
+function make(t) { for (let i = 0; i < 500; i++) { const r = t.gen(); if (r) return Object.assign({ t }, r); } throw new Error('gen fail ' + t.id); }
+
+/* ---------- 채점 ---------- */
+function parseAns(s) {
+  s = String(s).replace(/,/g, '.').replace(/\s/g, '');
+  const fr = s.match(/^(-?\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)/);
+  if (fr) return +fr[1] / +fr[2];
+  const m = s.match(/-?\d+(?:\.\d+)?/);
+  return m ? +m[0] : NaN;
+}
+const correct = (inp, a) => !isNaN(inp) && Math.abs(inp - a) < 0.011;
+
+/* ---------- 앱 상태 ---------- */
+const $ = id => document.getElementById(id);
+let S = null, cur = null, mode = 'test';
+const MODE_NAME = { test: '평가 모드', all: '무한 연습(전체)', s: '무한 연습(직렬)', p: '무한 연습(병렬)' };
+
+document.querySelectorAll('.mode').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.mode').forEach(x => x.classList.remove('on')); b.classList.add('on'); mode = b.dataset.m;
+});
+try { $('inSid').value = localStorage.getItem('ohm_sid') || ''; $('inName').value = localStorage.getItem('ohm_name') || ''; } catch (e) {}
+
+$('bStart').onclick = () => {
+  const sid = $('inSid').value.trim(), name = $('inName').value.trim();
+  if (!sid || !name) { $('startMsg').textContent = '학번과 이름을 입력하세요.'; return; }
+  try { localStorage.setItem('ohm_sid', sid); localStorage.setItem('ohm_name', name); } catch (e) {}
+  S = { sid, name, mode, session: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        start: Date.now(), log: [], sent: 0, streak: 0, lastId: null,
+        queue: mode === 'test' ? T.map(make) : null };
+  $('who').textContent = `${sid} ${name} · ${MODE_NAME[mode]}`;
+  $('barWrap').classList.toggle('hidden', mode !== 'test');
+  $('practiceActions').classList.toggle('hidden', mode === 'test');
+  show('vPlay'); next();
+};
+
+function show(v) { ['vStart', 'vPlay', 'vResult'].forEach(x => $(x).classList.toggle('hidden', x !== v)); window.scrollTo(0, 0); }
+
+function next() {
+  if (S.mode === 'test') {
+    if (S.log.length >= S.queue.length) return finish();
+    cur = S.queue[S.log.length];
+  } else {
+    const pool = T.filter(t => S.mode === 'all' || t.g === S.mode).filter(t => t.id !== S.lastId);
+    cur = make(pick(pool));
+  }
+  S.lastId = cur.t.id;
+  const n = S.log.length + 1;
+  $('qNo').textContent = S.mode === 'test' ? `${n} / 20` : `${n}번`;
+  $('qGroup').textContent = cur.t.g === 's' ? '직렬' : '병렬';
+  $('qGroup').className = 'tag ' + cur.t.g;
+  $('qTag').textContent = cur.t.tag;
+  $('qText').textContent = cur.q;
+  $('qFig').innerHTML = cur.fig;
+  $('qUnit').textContent = cur.t.unit;
+  $('inAns').value = ''; $('inAns').disabled = false;
+  $('bCheck').classList.remove('hidden'); $('bNext').classList.add('hidden');
+  $('fb').innerHTML = '';
+  const c = $('card'); c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop');
+  updateTop();
+  setTimeout(() => $('inAns').focus(), 50);
+}
+
+function check() {
+  const raw = $('inAns').value.trim();
+  if (!raw) { const i = $('inAns'); i.classList.remove('shake'); void i.offsetWidth; i.classList.add('shake'); return; }
+  const v = parseAns(raw), ok = correct(v, cur.a);
+  S.log.push({ n: S.log.length + 1, id: cur.t.id, group: cur.t.g === 's' ? '직렬' : '병렬', tag: cur.t.tag, q: cur.q,
+               answer: f(cur.a) + cur.t.unit, input: raw, ok });
+  S.streak = ok ? S.streak + 1 : 0;
+  $('inAns').disabled = true;
+  $('bCheck').classList.add('hidden'); $('bNext').classList.remove('hidden');
+  $('bNext').textContent = (S.mode === 'test' && S.log.length >= 20) ? '결과 보기 →' : '다음 문제 →';
+  $('fb').innerHTML = ok
+    ? `<div class="fb ok"><b>정답! (${f(cur.a)}${cur.t.unit})</b><br>${cur.sol}</div>`
+    : `<div class="fb no"><b>오답 — 정답은 ${f(cur.a)}${cur.t.unit}</b><br>${cur.sol}</div>`;
+  updateTop();
+  $('bNext').focus();
+}
+$('bCheck').onclick = check;
+$('bNext').onclick = next;
+$('inAns').addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && !$('bNext').classList.contains('hidden') && document.activeElement !== $('inAns')) { e.preventDefault(); next(); } });
+$('bFinish').onclick = () => { if (!S.log.length) { show('vStart'); return; } finish(); };
+
+function updateTop() {
+  const ok = S.log.filter(x => x.ok).length;
+  $('cScore').textContent = `${ok} / ${S.log.length}`;
+  $('cStreak').textContent = `연속 ${S.streak}`;
+  if (S.mode === 'test') $('bar').style.width = (S.log.length / 20 * 100) + '%';
+}
+
+function stats() {
+  const L = S.log, ok = L.filter(x => x.ok).length;
+  const rate = arr => arr.length ? Math.round(arr.filter(x => x.ok).length / arr.length * 100) : '';
+  return { total: L.length, correct: ok, rate: rate(L), seriesRate: rate(L.filter(x => x.group === '직렬')),
+           parallelRate: rate(L.filter(x => x.group === '병렬')), minutes: Math.round((Date.now() - S.start) / 6000) / 10 };
+}
+
+function finish() {
+  const st = stats();
+  $('rWho').textContent = `${S.sid} ${S.name} · ${MODE_NAME[S.mode]}`;
+  $('rScore').textContent = `${st.correct} / ${st.total}`;
+  $('rDetail').textContent = `정답률 ${st.rate}% · 직렬 ${st.seriesRate === '' ? '-' : st.seriesRate + '%'} · 병렬 ${st.parallelRate === '' ? '-' : st.parallelRate + '%'} · ${st.minutes}분`;
+  const by = {};
+  S.log.forEach(x => { const k = x.id; by[k] = by[k] || { name: `${x.group} · ${x.tag}`, n: 0, ok: 0 }; by[k].n++; if (x.ok) by[k].ok++; });
+  $('rTable').innerHTML = T.filter(t => by[t.id]).map(t => { const b = by[t.id];
+    return `<tr><td>${b.name}</td><td>${b.n}</td><td style="color:${b.ok === b.n ? 'var(--ok)' : 'var(--no)'}">${b.ok}</td></tr>`; }).join('');
+  show('vResult');
+  submit();
+}
+
+async function submit() {
+  const el = $('rSend'); $('bResend').classList.add('hidden');
+  if (!SCRIPT_URL) { el.className = 'send no'; el.textContent = '결과 저장 주소가 설정되지 않아 제출하지 않았습니다. (선생님 설정 필요)'; return; }
+  const st = stats(), fresh = S.log.slice(S.sent);
+  const payload = Object.assign({ session: S.session, sid: S.sid, name: S.name, mode: MODE_NAME[S.mode], attempts: fresh }, st);
+  el.className = 'send'; el.textContent = '결과 제출 중…';
+  try {
+    await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+    S.sent = S.log.length;
+    el.className = 'send ok'; el.textContent = '✓ 결과가 선생님께 제출되었습니다.';
+  } catch (e) {
+    el.className = 'send no'; el.textContent = '제출 실패 — 인터넷 연결을 확인하고 다시 제출하세요.';
+    $('bResend').classList.remove('hidden');
+  }
+}
+$('bResend').onclick = submit;
+$('bAgain').onclick = () => show('vStart');
+window.addEventListener('beforeunload', e => { if (S && S.log.length > S.sent && SCRIPT_URL) { e.preventDefault(); e.returnValue = ''; } });
+</script>
+</body>
+</html>
