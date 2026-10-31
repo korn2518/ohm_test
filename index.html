@@ -66,6 +66,20 @@
   .big { font-size: 40px; font-weight: 800; }
   .send { font-size: 14px; margin-top: 8px; }
   .send.ok { color: var(--ok); } .send.no { color: var(--no); }
+  .pal { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; margin-top: 12px; }
+  .pb { font: inherit; font-size: 15px; font-weight: 700; padding: 8px 0; border-radius: 8px; border: 1.5px solid var(--line); background: #fff; color: var(--sub); cursor: pointer; }
+  .pb.done { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .pb.ok { background: #e7f6ee; color: var(--ok); border-color: var(--ok); }
+  .pb.no { background: #fdeaea; color: var(--no); border-color: var(--no); }
+  .pb.cur { outline: 3px solid var(--s); outline-offset: 1px; }
+  .nav { display: flex; gap: 8px; margin-top: 14px; }
+  .nav .btn { flex: 1; }
+  #bBack { display: none; }
+  .graded #bBack { display: block; }
+  .graded #bGrade, .graded #gradeHint { display: none; }
+  .actions { display: flex; gap: 8px; margin-top: 14px; }
+  .actions .btn { flex: 1; }
+  @media (max-width: 520px) { .pal { grid-template-columns: repeat(5, 1fr); } }
   @media (max-width: 520px) { .row2, .modes { grid-template-columns: 1fr; } .qtext { font-size: 16px; } }
 </style>
 </head>
@@ -84,16 +98,16 @@
       </div>
       <label class="f" style="margin-top:14px">모드 선택</label>
       <div class="modes" id="modes">
-        <button class="mode on" data-m="test"><b>평가 모드</b><span>20문항 (직렬 10 + 병렬 10), 끝나면 자동 제출</span></button>
-        <button class="mode" data-m="all"><b>무한 연습 · 전체</b><span>직렬·병렬 유형이 섞여서 계속 나옴</span></button>
-        <button class="mode" data-m="s"><b>무한 연습 · 직렬</b><span>직렬 10개 유형만</span></button>
-        <button class="mode" data-m="p"><b>무한 연습 · 병렬</b><span>병렬 10개 유형만</span></button>
+        <button class="mode on" data-m="test"><b>평가 모드</b><span>20개 유형 한 문항씩 (직렬 10 + 병렬 10)</span></button>
+        <button class="mode" data-m="all"><b>랜덤 연습</b><span>전체 유형에서 무작위 20문항</span></button>
+        <button class="mode" data-m="s"><b>직렬 연습</b><span>직렬 10개 유형</span></button>
+        <button class="mode" data-m="p"><b>병렬 연습</b><span>병렬 10개 유형</span></button>
       </div>
       <button class="btn wide" id="bStart">시작하기</button>
       <div class="msg" id="startMsg"></div>
     </div>
     <div class="panel sub" style="font-size:13px">
-      답은 숫자만 입력하세요 (예: 1.5). 단위는 자동으로 붙습니다. 전지의 내부 저항과 전선의 저항은 무시합니다.
+      답은 숫자만 입력하세요 (예: 1.5). 단위는 자동으로 붙습니다. 이전/다음 버튼, 번호판, 좌우로 밀기로 문제를 오갈 수 있고, 모든 문항에 답해야 채점할 수 있습니다. 다시 풀 때마다 숫자가 새로 바뀝니다. 전지의 내부 저항과 전선의 저항은 무시합니다.
     </div>
   </section>
 
@@ -101,9 +115,9 @@
   <section id="vPlay" class="hidden">
     <div class="top">
       <div class="who" id="who"></div>
-      <div class="score"><span class="chip" id="cScore">0 / 0</span><span class="chip" id="cStreak">연속 0</span></div>
+      <span class="chip" id="cDone">0 / 20 답함</span>
     </div>
-    <div class="bar" id="barWrap"><i id="bar"></i></div>
+    <div class="pal" id="pal"></div>
     <div class="card" id="card">
       <div class="qhead"><span class="qno" id="qNo"></span><span class="tag" id="qGroup"></span><span class="tag2" id="qTag"></span></div>
       <div class="qtext" id="qText"></div>
@@ -111,16 +125,16 @@
       <div class="ans">
         <input class="t" id="inAns" inputmode="decimal" autocomplete="off" placeholder="답 입력">
         <span class="unit" id="qUnit"></span>
-        <button class="btn" id="bCheck">채점</button>
       </div>
-      <div id="fb"></div>
-      <div class="actions">
-        <button class="btn hidden" id="bNext">다음 문제 →</button>
+      <div id="rv"></div>
+      <div class="nav">
+        <button class="btn ghost" id="bPrev">← 이전</button>
+        <button class="btn ghost" id="bNext">다음 →</button>
       </div>
     </div>
-    <div class="actions" id="practiceActions">
-      <button class="btn ghost" id="bFinish">그만하고 결과 제출</button>
-    </div>
+    <button class="btn wide" id="bGrade" disabled>제출하고 채점하기</button>
+    <button class="btn wide ghost" id="bBack">결과 화면으로</button>
+    <div class="sub" id="gradeHint" style="text-align:center;margin-top:6px"></div>
   </section>
 
   <!-- 결과 화면 -->
@@ -133,10 +147,14 @@
       <button class="btn ghost hidden" id="bResend" style="margin-top:8px">다시 제출</button>
     </div>
     <div class="panel">
-      <b>유형별 결과</b>
+      <b>문항별 결과</b> <span class="sub">— 번호를 누르면 풀이를 다시 볼 수 있어요</span>
+      <div class="pal" id="rPal"></div>
       <table class="res"><thead><tr><th>유형</th><th>푼 수</th><th>정답</th></tr></thead><tbody id="rTable"></tbody></table>
     </div>
-    <button class="btn wide" id="bAgain">처음으로</button>
+    <div class="actions">
+      <button class="btn" id="bRetry">새 숫자로 다시 풀기</button>
+      <button class="btn ghost" id="bAgain">처음으로</button>
+    </div>
   </section>
 </div>
 
@@ -340,121 +358,131 @@ const correct = (inp, a) => !isNaN(inp) && Math.abs(inp - a) < 0.011;
 
 /* ---------- 앱 상태 ---------- */
 const $ = id => document.getElementById(id);
-let S = null, cur = null, mode = 'test';
-const MODE_NAME = { test: '평가 모드', all: '무한 연습(전체)', s: '무한 연습(직렬)', p: '무한 연습(병렬)' };
+let S = null, mode = 'test';
+const MODE_NAME = { test: '평가 모드(20유형)', all: '랜덤 연습(20문항)', s: '직렬 연습(10문항)', p: '병렬 연습(10문항)' };
 
 document.querySelectorAll('.mode').forEach(b => b.onclick = () => {
   document.querySelectorAll('.mode').forEach(x => x.classList.remove('on')); b.classList.add('on'); mode = b.dataset.m;
 });
 try { $('inSid').value = localStorage.getItem('ohm_sid') || ''; $('inName').value = localStorage.getItem('ohm_name') || ''; } catch (e) {}
 
+function buildSet(m) {
+  if (m === 'test') return T.map(make);
+  if (m === 's' || m === 'p') return T.filter(t => t.g === m).map(make);
+  const out = []; let last = null;
+  for (let i = 0; i < 20; i++) { let t; do { t = pick(T); } while (t.id === last); last = t.id; out.push(make(t)); }
+  return out;
+}
+function startSet(m) {
+  S = { sid: S0.sid, name: S0.name, mode: m, session: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        start: Date.now(), qs: buildSet(m), ans: [], i: 0, graded: false, sent: false, results: null };
+  $('who').textContent = `${S.sid} ${S.name} · ${MODE_NAME[m]}`;
+  show('vPlay'); render();
+}
+let S0 = {};
 $('bStart').onclick = () => {
   const sid = $('inSid').value.trim(), name = $('inName').value.trim();
   if (!sid || !name) { $('startMsg').textContent = '학번과 이름을 입력하세요.'; return; }
   try { localStorage.setItem('ohm_sid', sid); localStorage.setItem('ohm_name', name); } catch (e) {}
-  S = { sid, name, mode, session: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-        start: Date.now(), log: [], sent: 0, streak: 0, lastId: null,
-        queue: mode === 'test' ? T.map(make) : null };
-  $('who').textContent = `${sid} ${name} · ${MODE_NAME[mode]}`;
-  $('barWrap').classList.toggle('hidden', mode !== 'test');
-  $('practiceActions').classList.toggle('hidden', mode === 'test');
-  show('vPlay'); next();
+  S0 = { sid, name }; startSet(mode);
 };
-
 function show(v) { ['vStart', 'vPlay', 'vResult'].forEach(x => $(x).classList.toggle('hidden', x !== v)); window.scrollTo(0, 0); }
 
-function next() {
-  if (S.mode === 'test') {
-    if (S.log.length >= S.queue.length) return finish();
-    cur = S.queue[S.log.length];
-  } else {
-    const pool = T.filter(t => S.mode === 'all' || t.g === S.mode).filter(t => t.id !== S.lastId);
-    cur = make(pick(pool));
-  }
-  S.lastId = cur.t.id;
-  const n = S.log.length + 1;
-  $('qNo').textContent = S.mode === 'test' ? `${n} / 20` : `${n}번`;
+const filled = k => S.ans[k] !== undefined && String(S.ans[k]).trim() !== '';
+
+function palette(el, onPick, cls) {
+  el.innerHTML = S.qs.map((q, k) => `<button class="pb ${cls(k)}" data-k="${k}">${k + 1}</button>`).join('');
+  el.querySelectorAll('.pb').forEach(b => b.onclick = () => onPick(+b.dataset.k));
+}
+
+function render() {
+  const N = S.qs.length, k = S.i, cur = S.qs[k];
+  palette($('pal'), go, j => (j === k ? 'cur ' : '') + (S.graded ? (S.results[j].ok ? 'ok' : 'no') : (filled(j) ? 'done' : '')));
+  $('qNo').textContent = `${k + 1} / ${N}`;
   $('qGroup').textContent = cur.t.g === 's' ? '직렬' : '병렬';
   $('qGroup').className = 'tag ' + cur.t.g;
   $('qTag').textContent = cur.t.tag;
   $('qText').textContent = cur.q;
   $('qFig').innerHTML = cur.fig;
   $('qUnit').textContent = cur.t.unit;
-  $('inAns').value = ''; $('inAns').disabled = false;
-  $('bCheck').classList.remove('hidden'); $('bNext').classList.add('hidden');
-  $('fb').innerHTML = '';
+  const inp = $('inAns'); inp.value = S.ans[k] || ''; inp.disabled = S.graded;
+  $('bPrev').disabled = k === 0;
+  $('bNext').disabled = k === N - 1;
+  if (S.graded) {
+    const r = S.results[k];
+    $('rv').innerHTML = `<div class="fb ${r.ok ? 'ok' : 'no'}"><b>${r.ok ? '정답' : '오답'} — 정답 ${f(cur.a)}${cur.t.unit}</b>${r.ok ? '' : ` (내 답: ${r.input || '미입력'})`}<br>${cur.sol}</div>`;
+  } else $('rv').innerHTML = '';
   const c = $('card'); c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop');
-  updateTop();
-  setTimeout(() => $('inAns').focus(), 50);
+  updateDone();
+  if (!S.graded && window.innerWidth > 900) setTimeout(() => inp.focus(), 50);
 }
+function updateDone() {
+  if (S.graded) return;
+  const N = S.qs.length, n = S.qs.filter((_, j) => filled(j)).length;
+  $('cDone').textContent = `${n} / ${N} 답함`;
+  $('bGrade').disabled = n < N;
+  $('gradeHint').textContent = n < N ? `아직 ${N - n}문항이 비어 있어요. 모두 입력하면 채점할 수 있습니다.` : '모든 문항에 답했습니다. 제출하면 수정할 수 없어요.';
+  document.querySelectorAll('#pal .pb').forEach((b, j) => b.classList.toggle('done', filled(j)));
+}
+function go(k) { if (k < 0 || k >= S.qs.length) return; S.i = k; render(); }
+$('inAns').addEventListener('input', e => { S.ans[S.i] = e.target.value; updateDone(); });
+$('inAns').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); if (S.i < S.qs.length - 1) go(S.i + 1); else $('inAns').blur(); } });
+$('bPrev').onclick = () => go(S.i - 1);
+$('bNext').onclick = () => go(S.i + 1);
+let tx = null;
+$('card').addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+$('card').addEventListener('touchend', e => { if (tx === null) return; const dx = e.changedTouches[0].clientX - tx; tx = null;
+  if (Math.abs(dx) > 70) go(S.i + (dx < 0 ? 1 : -1)); });
 
-function check() {
-  const raw = $('inAns').value.trim();
-  if (!raw) { const i = $('inAns'); i.classList.remove('shake'); void i.offsetWidth; i.classList.add('shake'); return; }
-  const v = parseAns(raw), ok = correct(v, cur.a);
-  S.log.push({ n: S.log.length + 1, id: cur.t.id, group: cur.t.g === 's' ? '직렬' : '병렬', tag: cur.t.tag, q: cur.q,
-               answer: f(cur.a) + cur.t.unit, input: raw, ok });
-  S.streak = ok ? S.streak + 1 : 0;
-  $('inAns').disabled = true;
-  $('bCheck').classList.add('hidden'); $('bNext').classList.remove('hidden');
-  $('bNext').textContent = (S.mode === 'test' && S.log.length >= 20) ? '결과 보기 →' : '다음 문제 →';
-  $('fb').innerHTML = ok
-    ? `<div class="fb ok"><b>정답! (${f(cur.a)}${cur.t.unit})</b><br>${cur.sol}</div>`
-    : `<div class="fb no"><b>오답 — 정답은 ${f(cur.a)}${cur.t.unit}</b><br>${cur.sol}</div>`;
-  updateTop();
-  $('bNext').focus();
-}
-$('bCheck').onclick = check;
-$('bNext').onclick = next;
-$('inAns').addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
-document.addEventListener('keydown', e => { if (e.key === 'Enter' && !$('bNext').classList.contains('hidden') && document.activeElement !== $('inAns')) { e.preventDefault(); next(); } });
-$('bFinish').onclick = () => { if (!S.log.length) { show('vStart'); return; } finish(); };
-
-function updateTop() {
-  const ok = S.log.filter(x => x.ok).length;
-  $('cScore').textContent = `${ok} / ${S.log.length}`;
-  $('cStreak').textContent = `연속 ${S.streak}`;
-  if (S.mode === 'test') $('bar').style.width = (S.log.length / 20 * 100) + '%';
-}
+$('bGrade').onclick = () => {
+  if (!confirmBox()) return;
+  S.results = S.qs.map((q, k) => { const raw = String(S.ans[k] || '').trim(), ok = correct(parseAns(raw), q.a);
+    return { n: k + 1, id: q.t.id, group: q.t.g === 's' ? '직렬' : '병렬', tag: q.t.tag, q: q.q, answer: f(q.a) + q.t.unit, input: raw, ok }; });
+  S.graded = true;
+  $('vPlay').classList.add('graded');
+  finish();
+};
+function confirmBox() { try { return window.confirm('제출하면 답을 고칠 수 없습니다. 채점할까요?'); } catch (e) { return true; } }
 
 function stats() {
-  const L = S.log, ok = L.filter(x => x.ok).length;
-  const rate = arr => arr.length ? Math.round(arr.filter(x => x.ok).length / arr.length * 100) : '';
-  return { total: L.length, correct: ok, rate: rate(L), seriesRate: rate(L.filter(x => x.group === '직렬')),
+  const L = S.results, rate = a => a.length ? Math.round(a.filter(x => x.ok).length / a.length * 100) : '';
+  return { total: L.length, correct: L.filter(x => x.ok).length, rate: rate(L), seriesRate: rate(L.filter(x => x.group === '직렬')),
            parallelRate: rate(L.filter(x => x.group === '병렬')), minutes: Math.round((Date.now() - S.start) / 6000) / 10 };
 }
-
 function finish() {
   const st = stats();
   $('rWho').textContent = `${S.sid} ${S.name} · ${MODE_NAME[S.mode]}`;
   $('rScore').textContent = `${st.correct} / ${st.total}`;
   $('rDetail').textContent = `정답률 ${st.rate}% · 직렬 ${st.seriesRate === '' ? '-' : st.seriesRate + '%'} · 병렬 ${st.parallelRate === '' ? '-' : st.parallelRate + '%'} · ${st.minutes}분`;
+  palette($('rPal'), k => { S.i = k; show('vPlay'); render(); }, j => S.results[j].ok ? 'ok' : 'no');
   const by = {};
-  S.log.forEach(x => { const k = x.id; by[k] = by[k] || { name: `${x.group} · ${x.tag}`, n: 0, ok: 0 }; by[k].n++; if (x.ok) by[k].ok++; });
+  S.results.forEach(x => { by[x.id] = by[x.id] || { name: `${x.group} · ${x.tag}`, n: 0, ok: 0 }; by[x.id].n++; if (x.ok) by[x.id].ok++; });
   $('rTable').innerHTML = T.filter(t => by[t.id]).map(t => { const b = by[t.id];
     return `<tr><td>${b.name}</td><td>${b.n}</td><td style="color:${b.ok === b.n ? 'var(--ok)' : 'var(--no)'}">${b.ok}</td></tr>`; }).join('');
   show('vResult');
   submit();
 }
+// 채점 후 풀이 화면에서 결과로 돌아가는 버튼
 
 async function submit() {
   const el = $('rSend'); $('bResend').classList.add('hidden');
-  if (!SCRIPT_URL) { el.className = 'send no'; el.textContent = '결과 저장 주소가 설정되지 않아 제출하지 않았습니다. (선생님 설정 필요)'; return; }
-  const st = stats(), fresh = S.log.slice(S.sent);
-  const payload = Object.assign({ session: S.session, sid: S.sid, name: S.name, mode: MODE_NAME[S.mode], attempts: fresh }, st);
+  if (S.sent) return;
+  if (!SCRIPT_URL) { el.className = 'send no'; el.textContent = '결과 저장 주소가 설정되지 않아 제출하지 않았습니다.'; return; }
+  const payload = Object.assign({ session: S.session, sid: S.sid, name: S.name, mode: MODE_NAME[S.mode], attempts: S.results }, stats());
   el.className = 'send'; el.textContent = '결과 제출 중…';
   try {
     await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
-    S.sent = S.log.length;
-    el.className = 'send ok'; el.textContent = '✓ 결과가 선생님께 제출되었습니다.';
+    S.sent = true; el.className = 'send ok'; el.textContent = '✓ 결과가 선생님께 제출되었습니다.';
   } catch (e) {
     el.className = 'send no'; el.textContent = '제출 실패 — 인터넷 연결을 확인하고 다시 제출하세요.';
     $('bResend').classList.remove('hidden');
   }
 }
 $('bResend').onclick = submit;
-$('bAgain').onclick = () => show('vStart');
-window.addEventListener('beforeunload', e => { if (S && S.log.length > S.sent && SCRIPT_URL) { e.preventDefault(); e.returnValue = ''; } });
+$('bRetry').onclick = () => { $('vPlay').classList.remove('graded'); startSet(S.mode); };
+$('bAgain').onclick = () => { $('vPlay').classList.remove('graded'); show('vStart'); };
+$('bBack').onclick = () => show('vResult');
+window.addEventListener('beforeunload', e => { if (S && !S.graded && S.ans.some(Boolean)) { e.preventDefault(); e.returnValue = ''; } });
 </script>
 </body>
 </html>
